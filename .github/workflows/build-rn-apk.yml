@@ -23,35 +23,32 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Initialize React Native Structure
-        run: |
-          # 1. Haddii uusan jirin folder-ka android
-          if [ ! -d "android" ]; then
-            echo "Folder-ka Android lama helin, hadda ayaan abuurayaa..."
-            
-            # Waxaan ku abuureynaa folder magaciisu yahay 'temp_app' si looga fogaado mkdir '' error
-            npx @react-native-community/cli init TijaaboApp --skip-install --install-pods false
-            
-            # Waxaan u soo wareejineynaa folder-ka 'android' iyo 'package.json' barta sare
-            cp -r TijaaboApp/android .
-            cp TijaaboApp/package.json .
-            cp TijaaboApp/metro.config.js .
-            cp TijaaboApp/babel.config.js .
-          fi
-
       - name: Install Dependencies
         run: |
+          npm install react react-native
+          # Haddii uusan jirin folder-ka android, abuur nidaamka
+          if [ ! -d "android" ]; then
+            npx @react-native-community/cli init TijaaboApp --directory . --skip-install
+          fi
           npm install
 
-      - name: Build Android Debug APK
+      - name: Create JS Bundle (XALKA CILADDA)
+        run: |
+          # Samee folder-ka assets haddii uusan jirin
+          mkdir -p android/app/src/main/assets
+          
+          # Amarkan wuxuu koodhkaaga App.js u beddelayaa bundle uu Android akhrin karo
+          npx react-native bundle --platform android --dev false --entry-file App.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          # Dhis APK-ga
+          # Waxaan dhisaynaa APK-ga isagoo wata bundle-ka
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: shaqohub-rn-debug
+          name: ShaqoHub-Fixed-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
