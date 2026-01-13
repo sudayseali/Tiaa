@@ -23,32 +23,35 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install Dependencies
+      - name: Initialize React Native (Fixed Method)
         run: |
-          npm install react react-native
-          # Haddii uusan jirin folder-ka android, abuur nidaamka
-          if [ ! -d "android" ]; then
-            npx @react-native-community/cli init TijaaboApp --directory . --skip-install
-          fi
+          # 1. Waxaan ku abuureynaa mashruuca folder kumeel-gaar ah (Temporary)
+          # Tani waxay ka hortageysaa 'mkdir' error-ka
+          npx @react-native-community/cli init ShaqoApp --skip-install --install-pods false
+          
+          # 2. Hadda waxaan u soo wareejineynaa folder-ka 'android' barta ugu sarreysa
+          # Waxaan sidoo kale soo qaadeynaa faylasha qaabeynta
+          mv ShaqoApp/android .
+          mv ShaqoApp/package.json .
+          mv ShaqoApp/metro.config.js .
+          mv ShaqoApp/babel.config.js .
+          
+          # 3. Rakib maktabadaha lagama maarmaanka ah
           npm install
 
-      - name: Create JS Bundle (XALKA CILADDA)
+      - name: Create JS Bundle
         run: |
-          # Samee folder-ka assets haddii uusan jirin
           mkdir -p android/app/src/main/assets
-          
-          # Amarkan wuxuu koodhkaaga App.js u beddelayaa bundle uu Android akhrin karo
           npx react-native bundle --platform android --dev false --entry-file App.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          # Waxaan dhisaynaa APK-ga isagoo wata bundle-ka
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ShaqoHub-Fixed-APK
+          name: ShaqoHub-Final-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
