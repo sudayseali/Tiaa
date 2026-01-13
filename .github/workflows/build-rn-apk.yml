@@ -25,24 +25,29 @@ jobs:
 
       - name: Initialize React Native Structure
         run: |
-          # 1. Haddii uusan jirin folder-ka android, hadda ayaan abuureynaa annagoo isticmaaleyna CLI-ga cusub
+          # 1. Haddii uusan jirin folder-ka android
           if [ ! -d "android" ]; then
-            echo "Folder-ka Android lama helin, hadda ayaan abuurayaa nidaamka..."
-            # Waxaan isticmaaleynaa amarka cusub ee ay soo jeediyeen
-            npx @react-native-community/cli init TijaaboApp --directory . --skip-install
+            echo "Folder-ka Android lama helin, hadda ayaan abuurayaa..."
+            
+            # Waxaan ku abuureynaa folder magaciisu yahay 'temp_app' si looga fogaado mkdir '' error
+            npx @react-native-community/cli init TijaaboApp --skip-install --install-pods false
+            
+            # Waxaan u soo wareejineynaa folder-ka 'android' iyo 'package.json' barta sare
+            cp -r TijaaboApp/android .
+            cp TijaaboApp/package.json .
+            cp TijaaboApp/metro.config.js .
+            cp TijaaboApp/babel.config.js .
           fi
 
       - name: Install Dependencies
         run: |
-          # Waxaan hubineynaa in package.json uu jiro ka hor intaan npm install la dhihin
           npm install
 
       - name: Build Android Debug APK
         run: |
           cd android
-          # Sii ogolaansho gradlew
           chmod +x gradlew
-          # Dhis APK-ga (Kani wuxuu qaadan karaa 10-15 daqiiqo)
+          # Dhis APK-ga
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
