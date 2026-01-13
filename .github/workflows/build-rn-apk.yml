@@ -23,26 +23,36 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Initialize React Native (Fixed Method)
+      - name: Initialize React Native Structure
         run: |
-          # 1. Waxaan ku abuureynaa mashruuca folder kumeel-gaar ah (Temporary)
-          # Tani waxay ka hortageysaa 'mkdir' error-ka
+          # 1. Kaydi koodhkaaga app.js
+          if [ -f app.js ]; then
+            cp app.js app.js.backup
+          fi
+
+          # 2. Abuuro nidaamka Android
           npx @react-native-community/cli init ShaqoApp --skip-install --install-pods false
           
-          # 2. Hadda waxaan u soo wareejineynaa folder-ka 'android' barta ugu sarreysa
-          # Waxaan sidoo kale soo qaadeynaa faylasha qaabeynta
+          # 3. Wareeji faylasha muhiimka ah
           mv ShaqoApp/android .
           mv ShaqoApp/package.json .
           mv ShaqoApp/metro.config.js .
           mv ShaqoApp/babel.config.js .
           
-          # 3. Rakib maktabadaha lagama maarmaanka ah
+          # 4. Soo celi koodhkaagii app.js magacaasna ku hay
+          if [ -f app.js.backup ]; then
+            mv app.js.backup app.js
+            # Tirtir App.js-ka uu CLI-gu abuuray haddii uu jiro si aysan isku dhex yaacin
+            rm -f App.js
+          fi
+          
           npm install
 
-      - name: Create JS Bundle
+      - name: Create JS Bundle (Fixed for app.js)
         run: |
           mkdir -p android/app/src/main/assets
-          npx react-native bundle --platform android --dev false --entry-file App.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          # Halkaan waxaan u badalnay --entry-file app.js (xaraf yar)
+          npx react-native bundle --platform android --dev false --entry-file app.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
 
       - name: Build Android APK
         run: |
@@ -53,5 +63,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ShaqoHub-Final-APK
+          name: ShaqoHub-RN-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
