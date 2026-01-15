@@ -28,14 +28,16 @@ jobs:
           npm install --legacy-peer-deps
           npx expo install --check || true
 
-      - name: 5. Prebuild Android (Force)
-        # Tallaabadan waxay dhalineysaa folder-ka android
+      - name: 5. Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
-      - name: 6. Universal Resource Fixer (Khasab)
-        # Amarkan wuxuu abuurayaa dhammaan midabada maqnaan kara si uusan Gradle u istaagin
+      - name: 6. Universal Resource & Style Fixer (FINAL)
+        # Halkan waxaan ku hagaajinaynaa Styles-ka iyo Colors-ka si buuxda
         run: |
+          # 1. Abuur folder-ka values
           mkdir -p android/app/src/main/res/values
+
+          # 2. Abuur colors.xml (Midabada)
           cat <<EOF > android/app/src/main/res/values/colors.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -44,29 +46,35 @@ jobs:
               <color name="colorAccent">#03DAC5</color>
               <color name="splashscreen_background">#ffffff</color>
               <color name="iconBackground">#ffffff</color>
-              <color name="white">#ffffff</color>
-              <color name="black">#000000</color>
           </resources>
           EOF
           
-          # Waxaan sidoo kale saxeynaa styles-ka haddii ay color maqan weydiinayaan
+          # 3. Abuur styles.xml (Muuqaalka & SplashScreen) - KANI WAA KII MAQNAA
           cat <<EOF > android/app/src/main/res/values/styles.xml
           <resources>
               <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
                   <item name="colorPrimary">@color/colorPrimary</item>
                   <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
                   <item name="colorAccent">@color/colorAccent</item>
+                  <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+                  <item name="android:windowBackground">@color/splashscreen_background</item>
+              </style>
+
+              <style name="Theme.App.SplashScreen" parent="Theme.AppCompat.Light.NoActionBar">
+                  <item name="android:windowBackground">@color/splashscreen_background</item>
+                  <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+                  <item name="colorPrimary">@color/colorPrimary</item>
+                  <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
               </style>
           </resources>
           EOF
 
-      - name: 7. Build APK with Gradle (Force Clean)
+      - name: 7. Build APK with Gradle
         env:
           _JAVA_OPTIONS: "-Xmx4g"
         run: |
           cd android
           chmod +x gradlew
-          # Clean-gu wuxuu tirtiraa wixii khaladaad ah oo hore u jiray
           ./gradlew clean
           ./gradlew assembleDebug --no-daemon -x lint
 
