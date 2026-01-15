@@ -4,45 +4,39 @@ on:
   push:
     branches:
       - main
-      - master # Ku dar branch-ga aad isticmaalayso haddii uusan ahayn main
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Soo qaado Code-kaaga (Checkout)
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Diyaari Java (JDK 17 waa standard-ka cusub ee React Native)
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      # 3. Diyaari Node.js iyo Yarn/Npm
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
 
-      # 4. Shub (Install) dhammaan package-yada (node_modules)
       - name: Install Dependencies
         run: npm install
-        # Haddii aad yarn isticmaalayso ku badal: yarn install
 
-      # 5. Dhis App-ka (Build APK)
-      - name: Build Android Release
+      # Tallaabadan waxay dhalinaysaa folder-ka Android haddii uu maqan yahay
+      - name: Generate Android Folder
+        run: npx react-native@latest init TempApp --skip-install && cp -r TempApp/android . && rm -rf TempApp
+
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # 6. Soo upload-garee APK-ga la sameeyay si aad u degsato
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
