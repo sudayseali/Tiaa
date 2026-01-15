@@ -29,11 +29,20 @@ jobs:
       - name: 5. Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
-      - name: 6. Fix Android Resources (Splash Screen Fix)
-        # Amarkan wuxuu saxayaa haddii color-ku maqan yahay si uusan dhismuhu u hakan
+      - name: 6. Full Android Resources Fix
+        # Tallaabadan waxay xoog ku abuureysaa dhammaan midabada uu Gradle weydiinayo
         run: |
           mkdir -p android/app/src/main/res/values
-          echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="splashscreen_background">#ffffff</color></resources>' > android/app/src/main/res/values/colors.xml
+          cat <<EOF > android/app/src/main/res/values/colors.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="colorPrimary">#6200EE</color>
+              <color name="colorPrimaryDark">#3700B3</color>
+              <color name="colorAccent">#03DAC5</color>
+              <color name="splashscreen_background">#ffffff</color>
+              <color name="iconBackground">#ffffff</color>
+          </resources>
+          EOF
 
       - name: 7. Build APK with Gradle
         env:
@@ -41,6 +50,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
+          ./gradlew clean
           ./gradlew assembleDebug --no-daemon
 
       - name: 8. Upload Final APK
