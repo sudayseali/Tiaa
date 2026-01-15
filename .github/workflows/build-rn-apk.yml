@@ -23,12 +23,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 4. Setup Android NDK & SDK (CRITICAL FIX)
+      - name: 4. Force Install Correct NDK & CMake
         run: |
-          # Waxaan rakibaynaa NDK-ga saxda ah ee React Native 0.73 rabto
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653" "cmake;3.22.1"
-          
-          # Waxaan aqbalaynaa dhamaan shuruucda si uusan u istaagin
+          # React Native 0.73 waxay u baahan tahay NDK version-kan si gaar ah
+          echo "Installing NDK 25.2.9519653..."
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653" "cmake;3.22.1" --channel=0
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: 5. Install Dependencies
@@ -39,10 +38,12 @@ jobs:
       - name: 6. Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
-      - name: 7. Universal Resource & Style Fixer
-        # Xalinkii hore ee Styles-ka iyo Colors-ka (Waa muhiim inuu joogo)
+      - name: 7. Force Create Missing Android Resources
+        # Tani waxay xalinaysaa ciladaha: colorPrimary, splashscreen, iyo Styles
         run: |
           mkdir -p android/app/src/main/res/values
+          
+          # 1. Colors.xml
           cat <<EOF > android/app/src/main/res/values/colors.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -51,9 +52,12 @@ jobs:
               <color name="colorAccent">#03DAC5</color>
               <color name="splashscreen_background">#ffffff</color>
               <color name="iconBackground">#ffffff</color>
+              <color name="white">#ffffff</color>
+              <color name="black">#000000</color>
           </resources>
           EOF
-          
+
+          # 2. Styles.xml (Wuxuu xalinayaa Theme.App.SplashScreen error)
           cat <<EOF > android/app/src/main/res/values/styles.xml
           <resources>
               <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
@@ -63,6 +67,7 @@ jobs:
                   <item name="android:statusBarColor">@color/colorPrimaryDark</item>
                   <item name="android:windowBackground">@color/splashscreen_background</item>
               </style>
+              
               <style name="Theme.App.SplashScreen" parent="Theme.AppCompat.Light.NoActionBar">
                   <item name="android:windowBackground">@color/splashscreen_background</item>
                   <item name="android:statusBarColor">@color/colorPrimaryDark</item>
@@ -72,18 +77,17 @@ jobs:
           </resources>
           EOF
 
-      - name: 8. Build APK with Gradle
+      - name: 8. Build APK (With NDK Fix)
         env:
           _JAVA_OPTIONS: "-Xmx6g"
-          # Waxaan u sheegaynaa Gradle meesha NDK-gu yaalo
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           cd android
           chmod +x gradlew
           
-          # Halkan waxaan ku qasbaynaa inuu isticmaalo NDK version-ka aan soo dejinay
+          # Halkan waxaan ku qasbaynaa inuu isticmaalo NDK-ga aan soo dejinay
           echo "ndk.dir=$ANDROID_HOME/ndk/25.2.9519653" >> local.properties
           
+          # Nadiifi oo dhis (SKIP LINT si aan waqti loo lumin)
           ./gradlew clean
           ./gradlew assembleDebug --no-daemon -x lint
 
