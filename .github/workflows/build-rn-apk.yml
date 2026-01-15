@@ -24,18 +24,17 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install
-          # Tallaabadan waxay si toos ah u rakibaysaa version-nada ay Expo rabto
-          npx expo install --check
+          # Waxaan u oggolaanaynaa inuu rakibo xataa haddii ay jiraan digniino (warnings)
+          npm install --legacy-peer-deps
 
       - name: Prebuild Android
-        # Waxaan ku darnay --no-install si uusan dib ugu soo celin version-nadii hore
-        run: npx expo prebuild --platform android --non-interactive --no-install
+        run: npx expo prebuild --platform android --non-interactive
 
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
+          # --no-daemon waxay ka caawisaa GitHub Actions inay si nadiif ah u dhisto
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
