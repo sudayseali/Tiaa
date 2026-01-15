@@ -1,30 +1,50 @@
-name: Build Android APK (EAS)
+name: Build Android APK
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
+      - master # Ku dar branch-ga aad isticmaalayso haddii uusan ahayn main
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # 1. Soo qaado Code-kaaga (Checkout)
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # 2. Diyaari Java (JDK 17 waa standard-ka cusub ee React Native)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
         with:
-          node-version: 18
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-      - name: Install dependencies
+      # 3. Diyaari Node.js iyo Yarn/Npm
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # 4. Shub (Install) dhammaan package-yada (node_modules)
+      - name: Install Dependencies
         run: npm install
+        # Haddii aad yarn isticmaalayso ku badal: yarn install
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      # 5. Dhis App-ka (Build APK)
+      - name: Build Android Release
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      - name: Build APK with EAS
-        env:
-          CI: 1
-        run: eas build -p android --profile preview --non-interactive
+      # 6. Soo upload-garee APK-ga la sameeyay si aad u degsato
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
