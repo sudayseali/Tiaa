@@ -23,21 +23,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 4. Install Dependencies
+      - name: 4. Setup Android NDK & SDK (CRITICAL FIX)
+        run: |
+          # Waxaan rakibaynaa NDK-ga saxda ah ee React Native 0.73 rabto
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653" "cmake;3.22.1"
+          
+          # Waxaan aqbalaynaa dhamaan shuruucda si uusan u istaagin
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: 5. Install Dependencies
         run: |
           npm install --legacy-peer-deps
           npx expo install --check || true
 
-      - name: 5. Prebuild Android
+      - name: 6. Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
-      - name: 6. Universal Resource & Style Fixer (FINAL)
-        # Halkan waxaan ku hagaajinaynaa Styles-ka iyo Colors-ka si buuxda
+      - name: 7. Universal Resource & Style Fixer
+        # Xalinkii hore ee Styles-ka iyo Colors-ka (Waa muhiim inuu joogo)
         run: |
-          # 1. Abuur folder-ka values
           mkdir -p android/app/src/main/res/values
-
-          # 2. Abuur colors.xml (Midabada)
           cat <<EOF > android/app/src/main/res/values/colors.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -49,7 +54,6 @@ jobs:
           </resources>
           EOF
           
-          # 3. Abuur styles.xml (Muuqaalka & SplashScreen) - KANI WAA KII MAQNAA
           cat <<EOF > android/app/src/main/res/values/styles.xml
           <resources>
               <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
@@ -59,7 +63,6 @@ jobs:
                   <item name="android:statusBarColor">@color/colorPrimaryDark</item>
                   <item name="android:windowBackground">@color/splashscreen_background</item>
               </style>
-
               <style name="Theme.App.SplashScreen" parent="Theme.AppCompat.Light.NoActionBar">
                   <item name="android:windowBackground">@color/splashscreen_background</item>
                   <item name="android:statusBarColor">@color/colorPrimaryDark</item>
@@ -69,16 +72,22 @@ jobs:
           </resources>
           EOF
 
-      - name: 7. Build APK with Gradle
+      - name: 8. Build APK with Gradle
         env:
-          _JAVA_OPTIONS: "-Xmx4g"
+          _JAVA_OPTIONS: "-Xmx6g"
+          # Waxaan u sheegaynaa Gradle meesha NDK-gu yaalo
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           cd android
           chmod +x gradlew
+          
+          # Halkan waxaan ku qasbaynaa inuu isticmaalo NDK version-ka aan soo dejinay
+          echo "ndk.dir=$ANDROID_HOME/ndk/25.2.9519653" >> local.properties
+          
           ./gradlew clean
           ./gradlew assembleDebug --no-daemon -x lint
 
-      - name: 8. Upload Final APK
+      - name: 9. Upload Final APK
         uses: actions/upload-artifact@v4
         with:
           name: ShaqoHub-APK
