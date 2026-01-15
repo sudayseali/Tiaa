@@ -25,18 +25,20 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-          npx expo install --fix
+          # Tallaabadan waxay hubinaysaa in version-nada ay is-waafaqsan yihiin
+          npx expo install --check
 
-      # Tallaabadan hadda waxay dhalinaysaa folder-ka Android si buuxda
+      # Tallaabadan waxay dhalinaysaa folder-ka Android
       - name: Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
-      # Hubi in Gradle uusan ku fashilmin plugins maqan
+      # Kahor intaanan dhisin, waxaan hubineynaa in folder-ka android uu leeyahay settings-ka saxda ah
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          # Waxaan isticmaalaynaa --no-daemon si uu ugu dhex shaqeeyo deegaanka GitHub si ka fiican
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
