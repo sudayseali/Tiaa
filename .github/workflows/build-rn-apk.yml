@@ -16,7 +16,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Halkan ayaan ka saarnay 'cache: npm' si uusan u weydiin lock file
 
       - name: 3. Setup Java (JDK 17)
         uses: actions/setup-java@v4
@@ -25,27 +24,27 @@ jobs:
           java-version: '17'
 
       - name: 4. Install Dependencies
-        run: |
-          # Waxaan isticmaalaynaa legacy-peer-deps si looga gudbo is-qabqabsiga
-          npm install --legacy-peer-deps
-          # Xoog ku sax version-nada Expo (Linear Gradient iyo kuwa kale)
-          npx expo install --check || true
+        run: npm install --legacy-peer-deps
 
       - name: 5. Prebuild Android
         run: npx expo prebuild --platform android --non-interactive
 
-      - name: 6. Build APK with Gradle
+      - name: 6. Fix Android Resources (Splash Screen Fix)
+        # Amarkan wuxuu saxayaa haddii color-ku maqan yahay si uusan dhismuhu u hakan
+        run: |
+          mkdir -p android/app/src/main/res/values
+          echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="splashscreen_background">#ffffff</color></resources>' > android/app/src/main/res/values/colors.xml
+
+      - name: 7. Build APK with Gradle
         env:
           _JAVA_OPTIONS: "-Xmx4g"
-          GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g"
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew clean
           ./gradlew assembleDebug --no-daemon
 
-      - name: 7. Upload Final APK
+      - name: 8. Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: ShaqoHub-Android-Build
+          name: ShaqoHub-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
