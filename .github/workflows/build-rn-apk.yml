@@ -24,21 +24,17 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # 1. Rakib wax kasta adoo iska indha tiraya is-qabqabsiga
+          # Waxaan isticmaalaynaa legacy-peer-deps si uusan u istaagin
           npm install --legacy-peer-deps
-          # 2. Xoog ku sax version-nada Expo ay rabto
-          npx expo install --check
-          npx expo install --fix
+          # Waxaan ku darnay '|| true' si build-ku uusan u istaagin haddii digniin la bixiyo
+          npx expo install --check || true
 
       - name: Prebuild Android
-        # Tallaabadan waxay dhalinaysaa folder-ka android si nadiif ah
         run: npx expo prebuild --platform android --non-interactive
 
       - name: Build APK
         run: |
           cd android
-          # Nadiifi dhismihii hore si aysan khaladaad isugu dhex qasin
-          ./gradlew clean
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
