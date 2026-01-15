@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,13 +23,15 @@ jobs:
           java-version: '17'
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npx expo install --fix
 
-      # Expo waxay u baahan tahay inaan u sheegno inaan rabno 'Android' folder
+      # Tallaabadan hadda waxay dhalinaysaa folder-ka Android si buuxda
       - name: Prebuild Android
-        run: npx expo prebuild --platform android
+        run: npx expo prebuild --platform android --non-interactive
 
-      # Hadda dhis APK-ga
+      # Hubi in Gradle uusan ku fashilmin plugins maqan
       - name: Build APK
         run: |
           cd android
