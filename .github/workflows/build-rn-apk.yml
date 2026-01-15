@@ -1,67 +1,109 @@
-name: Build React Native APK
+name: Android Build APK
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Allows manual triggering
+
+env:
+  NODE_VERSION: '18'
+  JAVA_VERSION: '11'
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Initialize React Native Structure
-        run: |
-          # 1. Kaydi koodhkaaga app.js
-          if [ -f app.js ]; then
-            cp app.js app.js.backup
-          fi
-
-          # 2. Abuuro nidaamka Android
-          npx @react-native-community/cli init ShaqoApp --skip-install --install-pods false
-          
-          # 3. Wareeji faylasha muhiimka ah
-          mv ShaqoApp/android .
-          mv ShaqoApp/package.json .
-          mv ShaqoApp/metro.config.js .
-          mv ShaqoApp/babel.config.js .
-          
-          # 4. Soo celi koodhkaagii app.js magacaasna ku hay
-          if [ -f app.js.backup ]; then
-            mv app.js.backup app.js
-            # Tirtir App.js-ka uu CLI-gu abuuray haddii uu jiro si aysan isku dhex yaacin
-            rm -f App.js
-          fi
-          
-          npm install
-
-      - name: Create JS Bundle (Fixed for app.js)
-        run: |
-          mkdir -p android/app/src/main/assets
-          # Halkaan waxaan u badalnay --entry-file app.js (xaraf yar)
-          npx react-native bundle --platform android --dev false --entry-file app.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
-
-      - name: Build Android APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: ShaqoHub-RN-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Setup Java JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: ${{ env.JAVA_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        npx expo install --check
+        
+    - name: Setup Expo
+      run: |
+        npm install -g expo-cli
+        npx expo install expo-linear-gradient
+        npx expo install react-native-safe-area-context
+        npx expo install react-native-screens
+        npx expo install react-native-gesture-handler
+        npx expo install @react-native-async-storage/async-storage
+        
+    - name: Create EAS project (if needed)
+      run: |
+        if [ ! -f "eas.json" ]; then
+          echo "Creating eas.json..."
+          cat > eas.json << EOF
+          {
+            "cli": {
+              "version": ">= 3.0.0"
+            },
+            "build": {
+              "development": {
+                "developmentClient": true,
+                "distribution": "internal"
+              },
+              "preview": {
+                "android": {
+                  "buildType": "apk"
+                }
+              },
+              "production": {
+                "android": {
+                  "buildType": "apk"
+                }
+              }
+            },
+            "submit": {
+              "production": {}
+            }
+          }
+          EOF
+        fi
+        
+    - name: Install EAS CLI
+      run: npm install -g eas-cli
+        
+    - name: Login to Expo
+      run: |
+        if [ -n "${{ secrets.EXPO_TOKEN }}" ]; then
+          eas login --token ${{ secrets.EXPO_TOKEN }}
+        else
+          echo "EXPO_TOKEN not found, running without authentication"
+        fi
+        
+    - name: Build Android APK
+      run: |
+        eas build --platform android --profile preview --non-interactive --no-wait
+        
+    - name: Build Android APK (alternative method)
+      if: failure()
+      run: |
+        # Alternative method using expo build
+        expo build:android --type apk --non-interactive
+        
+    - name: Upload APK artifact
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: shaqohub-apk
+        path: |
+          *.apk
+          **/*.apk
+        retention-days: 7
