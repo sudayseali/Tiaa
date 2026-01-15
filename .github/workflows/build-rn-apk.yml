@@ -25,19 +25,17 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-          # Tallaabadan waxay hubinaysaa in version-nada ay is-waafaqsan yihiin
+          # Tallaabadan waxay si toos ah u rakibaysaa version-nada ay Expo rabto
           npx expo install --check
 
-      # Tallaabadan waxay dhalinaysaa folder-ka Android
       - name: Prebuild Android
-        run: npx expo prebuild --platform android --non-interactive
+        # Waxaan ku darnay --no-install si uusan dib ugu soo celin version-nadii hore
+        run: npx expo prebuild --platform android --non-interactive --no-install
 
-      # Kahor intaanan dhisin, waxaan hubineynaa in folder-ka android uu leeyahay settings-ka saxda ah
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-          # Waxaan isticmaalaynaa --no-daemon si uu ugu dhex shaqeeyo deegaanka GitHub si ka fiican
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
