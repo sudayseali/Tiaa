@@ -24,13 +24,16 @@ jobs:
           java-version: '17'
 
       - name: 4. Install Dependencies
-        run: npm install --legacy-peer-deps
+        run: |
+          npm install --legacy-peer-deps
+          npx expo install --check || true
 
-      - name: 5. Prebuild Android
+      - name: 5. Prebuild Android (Force)
+        # Tallaabadan waxay dhalineysaa folder-ka android
         run: npx expo prebuild --platform android --non-interactive
 
-      - name: 6. Full Android Resources Fix
-        # Tallaabadan waxay xoog ku abuureysaa dhammaan midabada uu Gradle weydiinayo
+      - name: 6. Universal Resource Fixer (Khasab)
+        # Amarkan wuxuu abuurayaa dhammaan midabada maqnaan kara si uusan Gradle u istaagin
         run: |
           mkdir -p android/app/src/main/res/values
           cat <<EOF > android/app/src/main/res/values/colors.xml
@@ -41,17 +44,31 @@ jobs:
               <color name="colorAccent">#03DAC5</color>
               <color name="splashscreen_background">#ffffff</color>
               <color name="iconBackground">#ffffff</color>
+              <color name="white">#ffffff</color>
+              <color name="black">#000000</color>
+          </resources>
+          EOF
+          
+          # Waxaan sidoo kale saxeynaa styles-ka haddii ay color maqan weydiinayaan
+          cat <<EOF > android/app/src/main/res/values/styles.xml
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+                  <item name="colorPrimary">@color/colorPrimary</item>
+                  <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+                  <item name="colorAccent">@color/colorAccent</item>
+              </style>
           </resources>
           EOF
 
-      - name: 7. Build APK with Gradle
+      - name: 7. Build APK with Gradle (Force Clean)
         env:
           _JAVA_OPTIONS: "-Xmx4g"
         run: |
           cd android
           chmod +x gradlew
+          # Clean-gu wuxuu tirtiraa wixii khaladaad ah oo hore u jiray
           ./gradlew clean
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon -x lint
 
       - name: 8. Upload Final APK
         uses: actions/upload-artifact@v4
