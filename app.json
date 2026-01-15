@@ -12,7 +12,13 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.shaqohusb.app"
+      "package": "com.shaqohusb.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "splash": {
+      "backgroundColor": "#ffffff"
     }
   }
 }
