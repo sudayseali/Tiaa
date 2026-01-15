@@ -2,8 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -11,14 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -26,15 +24,5 @@ jobs:
       - name: Install Expo CLI
         run: npm install -g expo-cli
 
-      - name: Login to Expo (anonymous)
-        run: npx expo whoami || true
-
-      - name: Build APK (Expo Classic)
+      - name: Build APK
         run: npx expo build:android -t apk --non-interactive
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: shaqohub-apk
-          path: |
-            **/*.apk
