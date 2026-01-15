@@ -1,37 +1,36 @@
 name: Build Android APK
-
 on:
   push:
     branches:
       - main
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          java-version: '17'
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
           distribution: 'temurin'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+          java-version: '17'
 
       - name: Install Dependencies
         run: npm install
 
-      # Tallaabadan waxay dhalinaysaa folder-ka Android haddii uu maqan yahay
-      - name: Generate Android Folder
-        run: npx react-native@latest init TempApp --skip-install && cp -r TempApp/android . && rm -rf TempApp
+      # Expo waxay u baahan tahay inaan u sheegno inaan rabno 'Android' folder
+      - name: Prebuild Android
+        run: npx expo prebuild --platform android
 
-      - name: Build Android APK
+      # Hadda dhis APK-ga
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
@@ -40,5 +39,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: ShaqoHub-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
